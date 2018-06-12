@@ -3,6 +3,7 @@ package com.elasticrating.repository;
 import com.elasticrating.model.Rating;
 import com.google.gson.Gson;
 import org.elasticsearch.action.index.IndexResponse;
+import org.elasticsearch.action.search.SearchRequestBuilder;
 import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.client.transport.TransportClient;
 import org.elasticsearch.common.xcontent.XContentType;
@@ -17,7 +18,7 @@ import java.util.List;
 import static org.elasticsearch.index.query.QueryBuilders.*;
 
 @Repository
-public class RatingRepositoryImpl {
+public class RatingRepositoryImpl implements RatingRepository{
     @Autowired
     private TransportClient client;
 
@@ -27,7 +28,7 @@ public class RatingRepositoryImpl {
     @Value("${elastic.index.type}")
     private String indexType;
 
-    public List<Rating> findAll(String idControl, String rating, String type, String description) {
+    public List<Rating> findAll(String idControl, String rating, String type, String description, Integer from, Integer size) {
         BoolQueryBuilder queryBuilder = boolQuery();
 
         if(idControl != null) queryBuilder.must(termQuery("idControl", idControl));
@@ -35,10 +36,14 @@ public class RatingRepositoryImpl {
         if(type != null) queryBuilder.must(termQuery("type", type));
         if(description != null) queryBuilder.must(matchQuery("description", description));
 
-        SearchResponse response = client.prepareSearch(indexName).
-                setTypes(indexType)
-                .setQuery(queryBuilder)
-                .execute().actionGet();
+        SearchRequestBuilder searchRequestBuilder = client.prepareSearch(indexName)
+                .setTypes(indexType)
+                .setQuery(queryBuilder);
+
+        if(from != null ) searchRequestBuilder.setFrom(from);
+        if(size != null ) searchRequestBuilder.setSize(size);
+
+        SearchResponse response =searchRequestBuilder.execute().actionGet();
 
         List<Rating> ratings = new ArrayList<>();
 

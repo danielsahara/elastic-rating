@@ -1,6 +1,6 @@
 version: '3'
 services:
-  elasticrating:
+  services:
     build:
       context: elastic-rating-services
       dockerfile: Dockerfile
